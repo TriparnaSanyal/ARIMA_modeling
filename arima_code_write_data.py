@@ -1,4 +1,4 @@
-
+#Arima Code
 
 def random_walk_calc(positions):
 
