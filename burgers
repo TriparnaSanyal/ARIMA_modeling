@@ -1,0 +1,73 @@
+%nu=0.00467;
+nu=1e-2
+n=1064;
+nt=25000;
+%dt=0.005;
+%dx=2\pi/n;
+%dx=0.025
+xi=linspace(-pi,pi,n);
+t=linspace(0,25,nt);
+u=zeros(n,nt);
+
+dx=2*pi/n
+dt=25/nt
+%u(:,1)=exp(-2.*((xi-2.5).^2));
+
+u(:,1)=cos(xi)+cos(2*xi)+sin(4*xi);%exp(-(xi.^2)/0.1);
+%u(:,1)=exp(-(xi.^2)/0.1)+sin(xi);
+u(1,1);
+u(1,:)=0;
+u(n,:)=0;
+%Time-integration
+
+for iter=1:nt-1
+    u(2:n-1,iter+1)=u(2:n-1,iter)+dt.*((nu.*(u(3:n,iter)-2.*u(2:n-1,iter)+u(1:n-2,iter))/dx.^2)-0.25.*((u(3:n,iter).^2-u(1:n-2,iter).^2)/dx));
+    
+end
+%for i=1:1000:nt
+    %file_name = ['trial' sprintf('%d',i) '.txt'];
+   % fileID=fopen(file_name, 'w');
+   % fprintf(fileID,'%d \n',u(:,i));
+   % fclose(fileID);
+%end;
+%plot(xi,u(:,100),xi,u(:,200),xi,u(:,700),xi,u(:,1000));
+u(:,:)
+X=u;
+
+%%DMD ALGORITHM
+
+%xi=linspace(-pi,pi,1064);
+%t=linspace(0,25,25000);
+%dt=t(2)-t(1);
+%[Xgrid,T]=meshgrid(xi,t);
+X1=X(:,1:end-1);
+X2=X(:,2:end);
+[U,S,V]=svd(X1,'econ');
+svds(X1,20)
+r=15;
+%plot(U(:,:))
+%plot(real(V(:,1:r)))
+Ur= U(:,1:r);
+Sr= S(1:r,1:r);
+Vr= V(:,1:r);
+%plot(real(Ur(:,:)));
+%X_check=U*S*V';
+%plot(real(X_check(:,3)),'b')
+%svds(X1,50)
+Atilde=Ur'*X2*Vr/Sr;
+[W,D]=eig(Atilde);
+phi = X2*Vr/Sr*W;
+max(real(phi),[],"all");
+lambda=diag(D);
+omega=log(lambda)/dt; %continuous time eigenvalues
+x1=X1(:,1);
+b=phi\x1;
+time_dynamics=zeros(r,length(t));
+for iter =1:length(t)
+time_dynamics(:,iter)=(b.*exp(omega*t(iter)));
+end
+Xdmd = phi*time_dynamics;
+error=norm(X-Xdmd);
+max(real(error),[],'all')
+max(real(X(:,1)),[],'all');
+plot(real(omega),imag(omega),'o');
